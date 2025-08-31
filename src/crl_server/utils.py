@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Thread
 from time import sleep
 
-from bottle import Bottle
+from bottle import Bottle, Route
 from crl_server.models import Args
 from logging_settings import LoggingSettings, setup_logging
 from rich_argparse import RichHelpFormatter
@@ -92,7 +92,8 @@ def run_server(
     settings.intermediate_ca.crl_file = crl_file
 
     app = Bottle()
-    app.route(settings.intermediate_ca.crl_server.route)(crl)
+
+    app.add_route(Route(app, settings.intermediate_ca.crl_server.route, "GET", crl))
 
     logger.warning("Starting %s", settings.intermediate_ca.crl_server.url)
 

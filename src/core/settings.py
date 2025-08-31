@@ -62,7 +62,7 @@ class CRLServerSettings(BaseModel):
     @computed_field
     @property
     def route(self) -> str:
-        return f"crl/{self.crl_file.name}"
+        return f"/crl/{self.crl_file.name}"
 
     @computed_field
     @property

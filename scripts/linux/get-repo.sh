@@ -15,4 +15,4 @@ git checkout "$BRANCH"
 git reset --hard "origin/$BRANCH"
 git pull -X theirs "origin" "$BRANCH"
 
-chmod +x -R "$PYTHON" "$(pwd)/scripts/linux/*"
+chmod -R +x "$PYTHON" ./scripts/linux/*

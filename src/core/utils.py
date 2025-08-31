@@ -183,7 +183,7 @@ def gen_full_pki(args: Args) -> None:
         args.crl_server_host, args.crl_server_port
     )
 
-    (private_key, private_key_file), (certificate, certificate_file) = make_server_pki(
+    (private_key, private_key_file), (certificate, certificate_file, chain_file) = make_server_pki(
         server_certs_editor,
         common_name,
         alt_names,
@@ -195,4 +195,7 @@ def gen_full_pki(args: Args) -> None:
     )
     CONSOLE.print(
         f"[bold green]Generated {common_name!r} certificate => {certificate_file.absolute().as_posix()!r}[/bold green]"
+    )
+    CONSOLE.print(
+        f"[bold green]Generated {common_name!r} certificate chain (server -> intermediate) => {chain_file.absolute().as_posix()!r}[/bold green]"
     )

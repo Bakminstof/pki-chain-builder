@@ -30,11 +30,15 @@ from pydantic import HttpUrl
 from core.helpers import SerialInfoHelper, CRLHelper
 from core.mixins import ClassNameReprMixin
 from core.settings import settings
-from core.io_utils import write_certificate, load_certificate, write_private_key, load_private_key
+from core.io_utils import write_certificates, load_certificate, write_private_key, load_private_key
 
 IP_V4_PATTERN = re_compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
 
 logger = getLogger(__name__)
+
+type PrivateKeyPath = Path
+type CertificatePath = Path
+type CertificateChainPath = Path
 
 
 class BaseEditor(ClassNameReprMixin):
@@ -175,7 +179,7 @@ class RootCA(BaseEditor):
             )
             .sign(self.private_key, self.hash_algorithm)
         )
-        write_certificate(self.certificate, self.certificate_file)
+        write_certificates(self.certificate, file_path=self.certificate_file)
 
         logger.info(
             "Made root CA certificate %r: %r",
@@ -299,7 +303,7 @@ class IntimidateCA(BaseEditor, SerialInfoHelper, CRLHelper):
             .sign(root_private_key, self.hash_algorithm)
         )
 
-        write_certificate(self.certificate, self.certificate_file)
+        write_certificates(self.certificate, file_path=self.certificate_file)
 
         logger.info(
             "Made intimidate CA certificate %r: %r",
@@ -440,8 +444,9 @@ class ServerCertsEditor(ClassNameReprMixin):
         server_private_key: PrivateKeyTypes,
         server_subject: Name,
         san: SubjectAlternativeName,
-    ) -> tuple[Certificate, Path]:
+    ) -> tuple[Certificate, CertificatePath, CertificateChainPath]:
         certificate_file = self.certs_dir / f"{name}.crt"
+        chain_file = self.certs_dir / f"{name}-chain.crt"
 
         serial_number = self.intermediate_ca.next_serial_num
 
@@ -479,7 +484,9 @@ class ServerCertsEditor(ClassNameReprMixin):
             .sign(self.intermediate_ca.private_key, self.hash_algorithm)
         )
 
-        write_certificate(certificate, certificate_file)
+        write_certificates(certificate, file_path=certificate_file)
+        write_certificates(certificate, self.intermediate_ca.certificate, file_path=chain_file)
+
         self.intermediate_ca.save_to_serial_file(
             serial_number,
             certificate.fingerprint(self.hash_algorithm).hex(),
@@ -492,7 +499,7 @@ class ServerCertsEditor(ClassNameReprMixin):
             certificate_file.absolute().as_posix(),
         )
 
-        return certificate, certificate_file
+        return certificate, certificate_file, chain_file
 
 
 def make_server_pki(
@@ -501,7 +508,10 @@ def make_server_pki(
     alt_names: Iterable[str],
     crl_server_host: str,
     crl_server_port: int,
-) -> tuple[tuple[PrivateKeyTypes, Path], tuple[Certificate, Path]]:
+) -> tuple[
+    tuple[PrivateKeyTypes, PrivateKeyPath],
+    tuple[Certificate, CertificatePath, CertificateChainPath],
+]:
     if server_certs_editor.crl_distribution_points is None:
         server_certs_editor.make_crl_distribution_points(crl_server_host, crl_server_port)
 
@@ -510,11 +520,11 @@ def make_server_pki(
     subject = server_certs_editor.make_subject(common_name)
     san = server_certs_editor.make_san(common_name, alt_names)
 
-    certificate, certificate_file = server_certs_editor.make_certificate(
+    certificate, certificate_file, chain_file = server_certs_editor.make_certificate(
         common_name,
         private_key,
         subject,
         san,
     )
 
-    return (private_key, private_key_file), (certificate, certificate_file)
+    return (private_key, private_key_file), (certificate, certificate_file, chain_file)

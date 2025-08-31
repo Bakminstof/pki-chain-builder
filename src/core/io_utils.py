@@ -1,6 +1,6 @@
 from logging import getLogger
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, Iterable
 
 from cryptography.hazmat.backends.openssl.backend import Backend
 from cryptography.hazmat.primitives._serialization import (
@@ -72,24 +72,32 @@ def write_model_as_json(
 
 
 def write_public_bytes(
-    item: CertificateRevocationList | Certificate,
+    *items: Certificate | CertificateRevocationList,
     file_path: Path,
     encoding: Encoding = settings.certs_encoding,
 ) -> Path:
-    data = item.public_bytes(encoding)
+    data = None
+
+    for item in items:
+        if data is None:
+            data = item.public_bytes(encoding)
+            continue
+
+        data += item.public_bytes(encoding)
+
     return write_bytes(data, file_path)
 
 
-def write_certificate(
-    certificate: Certificate,
+def write_certificates(
+    *certificates: Certificate,
     file_path: Path,
     encoding: Encoding = settings.certs_encoding,
 ) -> Path:
-    write_public_bytes(certificate, file_path, encoding)
+    write_public_bytes(*certificates, file_path=file_path, encoding=encoding)
 
     logger.debug(
         "Saved %r to %r",
-        certificate,
+        certificates,
         file_path.absolute().as_posix(),
     )
 
@@ -101,7 +109,7 @@ def write_crl(
     file_path: Path,
     encoding: Encoding = settings.certs_encoding,
 ) -> Path:
-    write_public_bytes(crl, file_path, encoding)
+    write_public_bytes(crl, file_path=file_path, encoding=encoding)
 
     logger.debug(
         "Saved %r to %r",

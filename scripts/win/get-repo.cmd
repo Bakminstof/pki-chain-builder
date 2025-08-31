@@ -23,6 +23,6 @@ git clone --depth=1 --single-branch --branch "%BRANCH%" --no-checkout "%REPO_URL
 
 git sparse-checkout set --no-cone "/.gitattributes" "/.gitignore" "!/env" "/env/python-3.12.10-embed-amd64-win" "/scripts" "/src" "/LICENSE" "/pyproject.toml"
 
-git checkout "$BRANCH"
-git reset --hard "origin/$BRANCH"
-git pull -X theirs "origin" "$BRANCH"
+git checkout "%BRANCH%"
+git reset --hard "origin/%BRANCH%"
+git pull -X theirs "origin" "%BRANCH%"

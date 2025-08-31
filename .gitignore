@@ -5,3 +5,6 @@ __pycache__
 /logs
 
 /poetry.lock
+
+# Local
+/notes.md

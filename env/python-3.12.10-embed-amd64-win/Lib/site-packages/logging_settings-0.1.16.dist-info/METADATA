@@ -1,0 +1,43 @@
+Metadata-Version: 2.3
+Name: logging_settings
+Version: 0.1.16
+Summary: 
+License: Apache-2.0
+Author: Bakminstof
+Author-email: bakminstof@yandex.ru
+Requires-Python: >=3.12,<4.0
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Provides-Extra: all
+Provides-Extra: loki
+Requires-Dist: colorama (>=0.4.6,<0.5.0)
+Requires-Dist: pydantic (>=2.11.7,<3.0.0)
+Requires-Dist: pydantic-settings (>=2.10.1,<3.0.0)
+Requires-Dist: python-logging-loki (>=0.3.1,<0.4.0) ; extra == "loki"
+Project-URL: Repository, https://github.com/Bakminstof/logging_settings
+Description-Content-Type: text/markdown
+
+Example:
+```python
+from logging_settings import LoggingSettings, setup_logging
+
+LOKI_URL = "http://loki"
+LOKI_TAGS = {"name": "my_app"}
+
+def startup(loki: bool = True) -> None:
+    log_settings = LoggingSettings(
+        loglevel="DEBUG",
+        rotating_file_handler=True,
+        logs_dir="/var/log/my_app",
+        filename="my-app.log",
+    )
+
+    if loki:
+        log_settings.loki_handler = loki
+        log_settings.loki_tags = LOKI_TAGS
+
+    setup_logging(log_settings)
+```
+
